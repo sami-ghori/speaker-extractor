@@ -1,0 +1,9 @@
+
+services:
+  - type: web
+    name: speaker-extractor
+    env: docker
+    plan: free
+    branch: main
+    region: oregon
+    dockerContext: .
