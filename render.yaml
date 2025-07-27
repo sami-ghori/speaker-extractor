@@ -6,3 +6,4 @@ services:
     branch: main
     region: oregon
     dockerContext: .
+    healthCheckPath: /
