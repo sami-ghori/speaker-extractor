@@ -1,4 +1,4 @@
-gradio==4.29.0
+gradio==4.44.1
 opencv-python-headless==4.9.0.80
 moviepy==1.0.3
 pydub==0.25.1

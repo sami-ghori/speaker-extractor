@@ -302,54 +302,29 @@ def process_video(
     except Exception as e:
         return None, f"❌ Error: {e}"
 
-
 def build_ui():
-    with gr.Blocks(title="Speaker Extractor") as demo:
-        gr.Markdown(
-            """
-# 🎤 Speaker Extractor (Face + Voice + Denoise)
-**Keeps only segments where the speaker is visible and talking, denoises audio, and returns 20–30s clips.**
-            """
-        )
-
-        video_input = gr.Video(label="Upload Video")
+    with gr.Blocks() as demo:
+        gr.Markdown("# 🎤 Speaker Extractor (Face + Voice + Denoise)")
+        video = gr.Video()
         with gr.Accordion("Advanced Settings", open=False):
-            frame_skip = gr.Slider(1, 20, value=2, step=1, label="Frame Skip (higher = faster, less accurate)")
-            min_segment_dur = gr.Slider(1.0, 15.0, value=5.0, step=0.5, label="Min Segment Duration (for candidate segments, seconds)")
-            silence_thresh_db = gr.Slider(-80, -10, value=-35, step=1, label="Silence Threshold (dBFS, higher = stricter)")
-            min_silence_len_ms = gr.Slider(100, 2000, value=800, step=50, label="Min Silence Length (ms)")
-            keep_silence_ms = gr.Slider(0, 1000, value=100, step=25, label="Silence Padding (ms)")
-            threads = gr.Slider(1, 8, value=4, step=1, label="FFmpeg Threads")
-            preset = gr.Dropdown(
-                ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium"],
-                value="ultrafast",
-                label="x264 Preset",
-            )
-
-        output_file = gr.File(label="📦 Download Speaker Clips (ZIP)")
-        status_box = gr.Textbox(label="Status", interactive=False)
-
-        gr.Button("🚀 Process").click(
-            fn=process_video,
-            inputs=[
-                video_input,
-                frame_skip,
-                min_segment_dur,
-                threads,
-                preset,
-                silence_thresh_db,
-                min_silence_len_ms,
-                keep_silence_ms,
-            ],
-            outputs=[output_file, status_box],
+            frame_skip = gr.Slider(1, 10, value=2, label="Frame Skip")
+            min_segment_dur = gr.Slider(5, 30, value=20, label="Minimum Segment Duration (sec)")
+            silence_thresh_db = gr.Slider(-80, -10, value=-45, label="Silence Threshold (dB)")
+            min_silence_len_ms = gr.Slider(100, 2000, value=400, label="Min Silence Length (ms)")
+            keep_silence_ms = gr.Slider(0, 1000, value=100, label="Keep Silence Padding (ms)")
+            threads = gr.Slider(1, 8, value=4, label="Encoding Threads")
+            preset = gr.Dropdown(["ultrafast", "superfast", "fast"], value="ultrafast", label="Encoding Preset")
+        output = gr.File(label="Download ZIP")
+        status = gr.Textbox(label="Status")
+        btn = gr.Button("🎬 Process Video")
+        btn.click(
+            process_video,
+            inputs=[video, frame_skip, min_segment_dur, threads, preset,
+                    silence_thresh_db, min_silence_len_ms, keep_silence_ms],
+            outputs=[output, status],
+            concurrency_limit=1  # ✅ This replaces queue()
         )
-
     return demo
 
-
 if __name__ == "__main__":
-    # Render (Docker) — bind to 0.0.0.0 and a fixed port
-    port = int(os.environ.get("PORT", 10000))
-    build_ui().queue(concurrency_count=1, max_size=2).launch(
-        server_name="0.0.0.0", server_port=port, show_error=True
-    )
+    build_ui().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
